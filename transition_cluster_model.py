@@ -72,9 +72,6 @@ class mllt(nn.Module):
     def cross_attention(self,v,c):
         B, Nt, E = v.shape
         v = v / math.sqrt(E)
-        # print("v :", v)
-        # print("c :", c)
-
         v = self.drop_out(self.fc_key(v))
         c = self.drop_out(self.fc_query(c))
         g = torch.bmm(v, c.transpose(-2, -1))
@@ -82,7 +79,6 @@ class mllt(nn.Module):
         m = F.max_pool2d(g,kernel_size = (1,g.shape[-1])).squeeze(1)  # [b, l, 1]
 
         b = torch.softmax(m, dim=1)  # [b, l, 1]
-        # print("b: ",b.squeeze().squeeze(),torch.max(b),torch.sum(b))
         return b  
         
 
@@ -96,8 +92,6 @@ class mllt(nn.Module):
         
     def get_cluster_prob(self, embeddings,Center):
         norm_squared = torch.sum((embeddings.unsqueeze(1) - Center)**2, -1)
-        # norm_squared =  F.pairwise_distance(embeddings.unsqueeze(-1), Center.T, p=2)
-        # print("norm: ",numerator[:5,:10])
 
         numerator = 1.0 / (1.0 + (norm_squared / self.alpha))
 
@@ -107,10 +101,7 @@ class mllt(nn.Module):
         return numerator / torch.sum(numerator, dim=1, keepdim=True)
 
     def target_distribution(self,batch):
-        # print("batch: ", batch)
 
-        # print("batch** 2: ",batch ** 2)
-        # print("(torch.sum(batch, 0) + 1e-9", (torch.sum(batch, 0) + 1e-9))
         weight = (batch ** 2) / (torch.sum(batch, 0) + 1e-9)
         return (weight.t() / torch.sum(weight, 1)).t()
 
@@ -168,13 +159,9 @@ class mllt(nn.Module):
         Center = self.drop_out(self.cluster_fc(Center)) ## 8x384
 
         phi = self.get_cluster_prob(Ztd,Center)#phi batch x 10 x 1
-        # print("phi: ",phi[:,:])
-        # print("z",Ztd[:3,:10].unsqueeze(1))
-        # print("Center",Center[:5,:10])
-        # print("divition: ",(Ztd[:5,:].unsqueeze(1) - Center).sum(-1)[:,:10])
+   
         
         cluster_target =self.target_distribution(phi).detach()
-        # print(phi[:1,:],cluster_target[:1,:])
 
         ct = self.drop_out(Center * phi.unsqueeze(-1)).sum(1)
         return ct,phi,Center

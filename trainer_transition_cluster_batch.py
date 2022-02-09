@@ -48,19 +48,13 @@ if evaluation:
     Logging = False
 
 loss_ratio = [1,1e-4,1]
-# loss_ratio = [1,1e-1,1] #gpu 24 ns_test1
-# loss_ratio = [1,1e-2,1] #gpu 23 ns_mllt1
-# loss_ratio = [1,1e-3,1] #gpu 23 ns_mllt2
-# loss_ratio = [1,1e-4,1] #gpu 23 ns_mllt3 BATCH_SIZE = 30
-# loss_ratio = [1,1e-4,1] #gpu 23 ns_mllt4 BATCH_SIZE = 60
-# loss_ratio = [1,1e-4,1] #gpu 23 ns_mllt BATCH_SIZE = 90
 
 
 Best_Roc = 0.7
 Best_F1 = 0.6
 visit = 'twice'
 save_dir= "weights"
-save_name = f"mllt_clinical_bert_pretrain__load_cluster_weights_transition_cluster_batch_{str(BATCH_SIZE)}_label_att_batch_{visit}_0129"
+save_name = f"xxxx"
 logging_text = open(f"logs/{save_name}.txt", 'w', encoding='utf-8')
 
 device1 = "cuda:1" 
@@ -69,13 +63,7 @@ device2 = "cuda:0"
 device2 = torch.device(device2)
 start_epoch = 0
 
-weight_dir = "weights/mllt_clinical_bert_transition_label_att_twice_0126_epoch_3_loss_0.1907_f1_0.8587_acc_0.6808.pth"
-# weight_dir = "weights/mllt_clinical_bert_pretrainer_class3_fusedweighted.pth"
-
-# weight_dir = "weights/mllt_clinical_bert_pretrain_transition_cluster_batch_30_label_att_batch_twice_0128_epoch_18_loss_0.5444_f1_0.891_acc_0.6515.pth"
-
-# weight_dir = "weights/mllt_clinical_bert_pretrain_transition_cluster_label_att_batch_twice_0128_epoch_37_loss_0.5558_f1_0.8913_acc_0.6322.pth"
-# weight_dir = "weights/basemodel_clinicalbert_cluster_pretrained_class3_self_att_once_0204_epoch_4_loss_0.354_f1_0.8741_acc_0.7511.pth"
+weight_dir = "weights/xx.pth"
 
 def clip_text(batch_size,max_length,vec,device):
     input_ids = vec['input_ids']
@@ -133,9 +121,6 @@ def fit(epoch,model,center_embedding,label_token,text_recon_loss,y_bce_loss,clus
     model.to(device)
     y_bce_loss.to(device)
     cluster_loss.to(device)
-
-    # if flag == 'train' and epoch ==0:
-    #     model, optimizer = amp.initialize(model, optimizer, opt_level="O1", keep_batchnorm_fp32=True) # 这里是“欧一”，不是“零一”
 
     chief_comp_last = deque(maxlen=2)
 
@@ -329,13 +314,10 @@ def fit(epoch,model,center_embedding,label_token,text_recon_loss,y_bce_loss,clus
 
 
 if __name__ == '__main__':
-    # train_dataset = PatientDataset('/home/comp/cssniu/mllt_backup/mllt/dataset/new_packed_data/once/',flag="train")
-    # trainloader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE, collate_fn=collate_fn,shuffle = True)
-    # test_dataset = PatientDataset('/home/comp/cssniu/mllt_backup/mllt/dataset/new_packed_data/once/',flag="test")
-    # testloader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE, collate_fn=collate_fn,shuffle = True)
-    train_dataset = PatientDataset(f'/home/comp/cssniu/mllt/dataset/new_packed_data/{visit}/',class_3,visit,flag="train")
+   
+    train_dataset = PatientDataset(f'xx/',class_3,visit,flag="train")
     trainloader = torch.utils.data.DataLoader(train_dataset, batch_size=BATCH_SIZE, collate_fn=collate_fn,shuffle = True,drop_last = True)
-    test_dataset = PatientDataset(f'/home/comp/cssniu/mllt/dataset/new_packed_data/{visit}/',class_3,visit,flag="test")
+    test_dataset = PatientDataset(f'/xx/',class_3,visit,flag="test")
     testloader = torch.utils.data.DataLoader(test_dataset, batch_size=BATCH_SIZE, collate_fn=collate_fn,shuffle = True,drop_last = True)
     label_embedding = label_descript()
     center_embedding = torch.load("dataset/medical_note_embedding_kmeans_8.pth").type(torch.cuda.FloatTensor)
@@ -348,9 +330,7 @@ if __name__ == '__main__':
     if pretrained:
         model.load_state_dict(torch.load(weight_dir,map_location=torch.device(device2)), strict=False)
         print("loading weight: ",weight_dir)
-    # model, optimizer = amp.initialize(model, optimizer, opt_level="O1") # 这里是“欧一”，不是“零一”
 
-    ### freeze parameters ####
     optimizer = optim.Adam(model.parameters(True), lr = 1e-5)
 
     if Freeze:
@@ -360,7 +340,6 @@ if __name__ == '__main__':
                 # print(child)
                 for param in child.parameters():
                     param.requires_grad = False
-    ##########################
 
 
 
